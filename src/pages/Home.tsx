@@ -1,10 +1,11 @@
-import React from 'react';
-import Navbar from '../components/shared/Navbar';
+
+import HeroSection from '../components/HeroSection';
 
 const Home = () => {
     return (
         <>
-            <Navbar/>
+            
+            <HeroSection></HeroSection>
         </>
     );
 };

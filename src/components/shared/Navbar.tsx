@@ -15,10 +15,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gray-900 text-white rounded-sm px-3">
+    <nav className="bg-gray-100 text-gray-900 rounded-sm px-3">
       <div className="container mx-auto flex items-center justify-between py-4">
         {/* Logo */}
-        <div className="flex items-center">
+        <div className="flex items-center ">
         <Link to="/home" className="flex items-center">
           <span>Car Doctor</span>
         </Link>
@@ -28,9 +28,12 @@ const Navbar = () => {
         <div className="hidden md:flex flex-grow items-center justify-center space-x-5">
           <ul className="flex items-center space-x-5">
             <li>
-              <span className="rounded-lg backdrop-blur-[2px] p-1 inline-block">
-                Products
-              </span>
+            <Link
+                className="rounded-lg backdrop-blur-[2px] p-1 inline-block"
+                to={"/services"}
+              >
+                Services
+              </Link>
             </li>
             <li>
               <span className="rounded-lg backdrop-blur-[2px] p-1 inline-block">

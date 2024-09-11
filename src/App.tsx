@@ -1,5 +1,6 @@
 
 import './App.css'
+import MainLayout from './components/layout/ManiLayout'
 import Home from './pages/Home'
 
 function App() {
@@ -7,8 +8,8 @@ function App() {
 
   return (
     <>
-    <Home></Home>
-    <h1 className='text-red-700'>hello</h1>
+   <MainLayout></MainLayout>
+    
     </>
   )
 }

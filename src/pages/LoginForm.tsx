@@ -15,7 +15,7 @@ const LoginForm = () => {
     try {
       await login({ email, password }).unwrap(); 
       toast.success("Logged in successfully");
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
       toast.error("Login failed, please check your credentials.");
