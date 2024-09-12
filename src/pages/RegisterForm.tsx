@@ -1,4 +1,4 @@
-import React from 'react';
+;
 import CdForm from '../components/form/CdForm';
 import CdInput from '../components/form/CdInput';
 import img from '../assets/images/car_doctor (2).png';
@@ -10,7 +10,7 @@ const RegisterForm = () => {
   const navigate = useNavigate();
   const [signUp, { isLoading }] = useSignUpMutation();
 
-  const handleSubmit = async (data) => {
+  const handleSubmit = async (data:any) => {
     console.log('Registration Data:', data);
     const { name, email, password } = data;
 

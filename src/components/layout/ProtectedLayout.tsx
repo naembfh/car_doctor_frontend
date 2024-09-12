@@ -1,9 +1,9 @@
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "../../redux/features/authSlice";
-import DashboardSidebar from "../shared/DashboardSidebar";
-import { Outlet } from "react-router-dom";
-import MainLayout from "./ManiLayout";
-import DashboardLayout from "./DashboardLayout";
+import { useSelector } from 'react-redux';
+import { Outlet } from 'react-router-dom';
+import DashboardLayout from './DashboardLayout';
+
+import { selectCurrentUser } from '../../redux/features/authSlice';
+import MainLayout from './ManiLayout';
 
 const ProtectedLayout = () => {
   const user = useSelector(selectCurrentUser);

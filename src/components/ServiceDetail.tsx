@@ -1,140 +1,186 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import img from '../assets/images/car_doctor (3).png'; 
+import img from '../assets/images/car_doctor (3).png';
 import { useGetServiceByIdQuery } from '../redux/api/ProductsApi';
 import { useGetAvailableSlotsQuery } from '../redux/api/slotApi';
+import { selectCurrentUser } from '../redux/features/authSlice';
+import { useSelector } from 'react-redux';
 
-const ServiceDetail = () => {
-    const { id } = useParams(); 
-    const navigate = useNavigate();
-    const [selectedDate, setSelectedDate] = useState<string>('');
-    const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-    const [dateOptions, setDateOptions] = useState<string[]>([]);
+import { Slot } from '../types/slotTypes';
 
-    // Fetch service details using the API hook
-    const { data: serviceData, error: serviceError, isLoading: serviceLoading } = useGetServiceByIdQuery(id as string);
+const ServiceDetail: React.FC = () => {
+  const user = useSelector(selectCurrentUser);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const isLoggedIn = !!user; // Check if user is logged in
 
-    // Fetch available slots for the service on the selected date
-    const { data: slotsData, error: slotsError, isLoading: slotsLoading } = useGetAvailableSlotsQuery({ id, date: selectedDate }, { skip: !selectedDate });
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [serviceId, setServiceId] = useState<string | null>(null);
+  const [displayedSlots, setDisplayedSlots] = useState<Slot[]>([]);
 
-    // Fetch available dates (this should be replaced with actual API if available)
-    useEffect(() => {
-        // Dummy dates for example purposes
-        const fetchAvailableDates = async () => {
-            // Fetch dates from an API if available
-            const dates = ['2024-09-15', '2024-09-16', '2024-09-17'];
-            setDateOptions(dates);
-        };
+  // Fetch service details
+  const { data: serviceData, error: serviceError, isLoading: serviceLoading } = useGetServiceByIdQuery(id ? parseInt(id) : 0);
+console.log(serviceData)
+  // Fetch available slots
+  const { data: slotsApiResponse, error: slotsError, isLoading: slotsLoading } = useGetAvailableSlotsQuery(serviceId || '', {
+    skip: serviceId === null,
+  });
 
-        fetchAvailableDates();
-    }, []);
-
-    if (serviceLoading) {
-        return <div>Loading...</div>;
+  useEffect(() => {
+    if (serviceData) {
+      setServiceId(serviceData.data._id);
     }
+  }, [serviceData]);
 
-    if (serviceError) {
-        return <div>Error: {serviceError?.message}</div>;
+  useEffect(() => {
+    if (slotsApiResponse?.data) { 
+      const today = new Date().toISOString().split('T')[0];
+
+      const filteredSlots = slotsApiResponse.data
+        .filter((slot: Slot) => slot.isBooked === 'available' && slot.date >= today)
+        .sort(
+          (a: Slot, b: Slot) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime() ||
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        );
+
+      setDisplayedSlots(filteredSlots.slice(0, 4));
     }
+  }, [slotsApiResponse]);
 
-    // Destructure service and slot data
-    const service = serviceData?.data;
-    const availableSlots = slotsData?.data || [];
+  useEffect(() => {
+    if (slotsApiResponse?.data) { 
+      const today = new Date().toISOString().split('T')[0];
 
-    // Handle slot selection
-    const handleSlotSelection = (slotId: string) => {
-        setSelectedSlot(slotId);  // Set selected slot
-    };
+      const filteredSlots = slotsApiResponse.data
+        .filter(
+          (slot: Slot) =>
+            slot.isBooked === 'available' &&
+            (selectedDates.length === 0 || selectedDates.includes(slot.date))
+        )
+        .filter((slot: Slot) => slot.date >= today)
+        .sort(
+          (a: Slot, b: Slot) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime() ||
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        );
 
-    // Handle date selection from dropdown
-    const handleDateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedDate(event.target.value);
-        setSelectedSlot(null); // Reset selected slot when date changes
-    };
+      setDisplayedSlots(filteredSlots.slice(0, 4));
+    }
+  }, [selectedDates, slotsApiResponse]);
 
-    return (
-        <div className="relative p-8 flex bg-white rounded-md">
-            {/* Service Details Section */}
-            <div className='w-1/3'>
-                <img 
-                    src={service?.image || img} 
-                    alt={service?.name} 
-                    className="w-96 h-96 object-cover rounded-lg" 
-                />
-            </div>
-            <div className='w-2/3 ml-16 mr-28'>
-                <h1 className="text-2xl font-bold">{service?.name}</h1>
-                <p>{service?.description}</p>
-                <h1 className="text-xl font-bold">$ {service?.price}</h1>
-                <button 
-                    type="submit"  
-                    className="border-2 border-gray-50 text-gray-50 font-bold bg-gray-900 rounded-md py-3 px-4 w-full flex items-center justify-center transition duration-500 ease-in-out transform hover:bg-gray-100 hover:text-gray-900 hover:border-gray-50"
-                >
-                    Add to cart
-                    <i className="fi fi-rr-shopping-cart mt-1 ml-2"></i>
-                </button>
-            </div>
-
-            {/* Time Slot and Booking Section */}
-            <div className="mt-8 w-full">
-                <h2 className="text-lg font-bold mb-4">Available Time Slots</h2>
-
-                {/* Dropdown for Date Selection */}
-                <div className="mb-6">
-                    <label htmlFor="date-select" className="block text-sm font-medium text-gray-700">
-                        Select Date
-                    </label>
-                    <select 
-                        id="date-select" 
-                        value={selectedDate} 
-                        onChange={handleDateChange} 
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                    >
-                        <option value="">Select a date</option>
-                        {dateOptions.map((date) => (
-                            <option key={date} value={date}>{new Date(date).toLocaleDateString()}</option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Display Available and Booked Time Slots */}
-                <div className="grid grid-cols-3 gap-4">
-                    {availableSlots.map((slot: any) => (
-                        <button 
-                            key={slot._id}
-                            disabled={slot.isBooked === "booked"}  // Disable booked slots
-                            onClick={() => handleSlotSelection(slot._id)}  // Select available slot
-                            className={`p-4 border rounded-md transition ${
-                                slot.isBooked === "booked" 
-                                    ? 'bg-gray-200 cursor-not-allowed' 
-                                    : 'bg-green-500 hover:bg-green-600 cursor-pointer'
-                            } ${selectedSlot === slot._id ? 'ring-2 ring-blue-500' : ''}`}  // Highlight selected slot
-                        >
-                            {slot.startTime} - {slot.endTime}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Show "Book This Service" button after selecting a slot */}
-                {selectedSlot && (
-                    <button 
-                        className="mt-6 py-3 px-6 bg-blue-500 text-white font-bold rounded-md"
-                        onClick={() => alert(`Booked slot ID: ${selectedSlot}`)}  // Handle booking logic
-                    >
-                        Book This Service
-                    </button>
-                )}
-            </div>
-
-            <button 
-                onClick={() => navigate(-1)} 
-                className='absolute top-4 right-4 text-gray-500 hover:text-gray-900'
-            >
-                <i className="fi fi-rr-rectangle-xmark text-2xl"></i>
-                <span className="sr-only">Close</span>
-            </button>
-        </div>
+  const handleDateChange = (date: string) => {
+    setSelectedDates(prevDates =>
+      prevDates.includes(date)
+        ? prevDates.filter(d => d !== date)
+        : [...prevDates, date]
     );
+  };
+
+  const handleSlotChange = (slotId: string) => {
+    setSelectedSlot(slotId ?? null); 
+  };
+
+  const handleBookService = () => {
+    if (isLoggedIn) {
+      console.log('Service booked with slot ID:', selectedSlot);
+    } else {
+      alert('Please log in to book this service.');
+      navigate('/login');
+    }
+  };
+
+  if (serviceLoading) return <div>Loading service...</div>;
+  if (serviceError) return <div>Error loading service: {serviceError instanceof Error ? serviceError.message : 'Unknown error'}</div>;
+
+  if (slotsLoading) return <div>Loading slots...</div>;
+  if (slotsError) return <div>Error loading slots: {slotsError instanceof Error ? slotsError.message : 'Unknown error'}</div>;
+
+  return (
+    <div className="relative p-8 flex bg-white rounded-md">
+      <div className="w-1/3">
+        <img
+          src={serviceData?.data.img || img}
+          alt={serviceData?.data.name}
+          className="w-96 h-96 object-cover rounded-lg"
+        />
+      </div>
+      <div className="w-1/3 ml-16 mr-28">
+        <h1 className="text-2xl font-bold">{serviceData?.data.name}</h1>
+        <p>{serviceData?.data.description}</p>
+        <h1 className="text-xl font-bold">$ {serviceData?.data.price}</h1>
+      </div>
+      <div className="w-1/3">
+        <div className="relative mb-5">
+          <button
+            id="datesButton"
+            className="w-full h-8 flex items-center justify-center bg-gray-500 shadow-lg py-1 hover:text-gray-500 border-2 text-gray-50 bg-gray-500 rounded-lg hover:bg-gray-100 hover:border-gray-50 px-4 transition duration-500 ease-in-out"
+            onClick={() => document.getElementById('datesDropdown')?.classList.toggle('hidden')}
+          >
+            Select Dates
+          </button>
+          <div
+            id="datesDropdown"
+            className="w-full px-5 pb-5 absolute top-9 left-0 border-2 border-gray-50 z-50 bg-gray-50 rounded-lg shadow-lg hidden"
+          >
+            <div className="flex flex-col mt-2">
+              {['2024-10-15', '2024-10-16'].map(date => (
+                <div key={date} className="mt-2 flex items-center">
+                  <input
+                    type="checkbox"
+                    id={date}
+                    checked={selectedDates.includes(date)}
+                    onChange={() => handleDateChange(date)}
+                    className="appearance-none rounded-md border-2 w-4 h-4 cursor-pointer transition duration-300 bg-white border-gray-300 checked:bg-purple-500 checked:border-transparent checked:ring-2 checked:ring-purple-500"
+                  />
+                  <label htmlFor={date} className="ml-2 cursor-pointer hover:text-purple-500">
+                    {date}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative mb-5">
+          <div className="flex flex-wrap gap-2">
+            {displayedSlots.length > 0 ? (
+              displayedSlots.map(slot => (
+                <button
+                  key={slot._id}
+                  onClick={() => handleSlotChange(slot._id)}
+                  className={`w-20 h-8 rounded-lg ${selectedSlot === slot._id ? 'bg-purple-500 text-white' : 'bg-gray-200'}`}
+                >
+                  {`${slot.date} ${slot.startTime} - ${slot.endTime}`}
+                </button>
+              ))
+            ) : (
+              <div>No available slots</div>
+            )}
+          </div>
+        </div>
+
+        {selectedSlot && (
+          <button
+            onClick={handleBookService}
+            className={`w-full h-12 mt-4 ${isLoggedIn ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'} rounded-lg`}
+            disabled={!isLoggedIn || !selectedSlot}
+          >
+            {isLoggedIn ? 'Book this Service' : 'Please log in to book this service'}
+          </button>
+        )}
+      </div>
+
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-4 right-4 text-gray-500 hover:text-gray-900"
+      >
+        <i className="fi fi-rr-rectangle-xmark text-2xl"></i>
+        <span className="sr-only">Close</span>
+      </button>
+    </div>
+  );
 };
 
 export default ServiceDetail;

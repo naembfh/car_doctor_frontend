@@ -1,3 +1,4 @@
+// src/routes/routes.tsx
 import { createBrowserRouter } from 'react-router-dom';
 import Home from '../pages/Home';
 import LoginForm from '../pages/LoginForm';
@@ -5,13 +6,13 @@ import RegisterForm from '../pages/RegisterForm';
 import Services from '../components/Services';
 import ServiceDetail from '../components/ServiceDetail';
 import NotFound from '../components/NotFound'; // Add a NotFound component for undefined routes
-import ProtectedLayout from '../components/layout/ProtectedLayout';
-// Update with your actual path
+
+import App from '../App';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <ProtectedLayout />, // Use ProtectedLayout for routes
+    element: <App />, // Use ProtectedLayout for routes
     children: [
       {
         index: true,

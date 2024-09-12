@@ -1,10 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // Import useNavigate and useLocation
+import { useAppDispatch, useAppSelector } from "../../redux/hook";
+import { logout } from "../../redux/features/authSlice";
+import { toast } from "sonner";
+// For displaying success messages
 
 const Navbar = () => {
-  // Placeholder for cart and user state
-  const cartItems = []; // Placeholder for cart items
-  const user = null; // Placeholder for user info
+  const user = useAppSelector((store) => store.auth.user); // Access user directly from state
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate(); // Initialize navigate
+  const location = useLocation(); // To get the current location
 
   // State for mobile menu toggle
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,21 +19,31 @@ const Navbar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const handleLoginLogout = () => {
+    if (user) {
+      dispatch(logout());
+      toast.success("Logged out successfully");
+    } else {
+      // Navigate to login page and pass the current location for redirect after login
+      navigate("/login", { state: { from: location.pathname } });
+    }
+  };
+
   return (
     <nav className="bg-gray-100 text-gray-900 rounded-sm px-3">
       <div className="container mx-auto flex items-center justify-between py-4">
         {/* Logo */}
         <div className="flex items-center ">
-        <Link to="/home" className="flex items-center">
-          <span>Car Doctor</span>
-        </Link>
+          <Link to="/home" className="flex items-center">
+            <span>Car Doctor</span>
+          </Link>
         </div>
 
         {/* Center Navigation Items */}
         <div className="hidden md:flex flex-grow items-center justify-center space-x-5">
           <ul className="flex items-center space-x-5">
             <li>
-            <Link
+              <Link
                 className="rounded-lg backdrop-blur-[2px] p-1 inline-block"
                 to={"/services"}
               >
@@ -40,36 +55,15 @@ const Navbar = () => {
                 About
               </span>
             </li>
-            {user && user.role === "admin" && (
-              <li>
-                <span className="rounded-lg backdrop-blur-[2px] p-1 inline-block">
-                  Management
-                </span>
-              </li>
-            )}
-            {user && (
-              <li>
-                <span className="rounded-lg backdrop-blur-[2px] p-1 inline-block">
-                  My Orders
-                </span>
-              </li>
-            )}
           </ul>
         </div>
 
         {/* Right Side Buttons */}
         <div className="hidden md:flex items-center space-x-5">
-          <button className="rounded-lg p-1 inline-block relative">
-            <i className="fi fi-rr-dolly-flatbed"></i>
-            <span className="rounded-full absolute top-[-10px] left-[20px] bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center">
-              {cartItems.length}
-            </span>
-          </button>
-
-          <button className="rounded-lg p-1 inline-block">
+          <button onClick={handleLoginLogout} className="rounded-lg p-1 inline-block">
             <i
               className={`fi ${user ? "fi fi-rr-sign-out-alt" : "fi-rr-circle-user"}`}
-            ></i>
+            ></i> {user ? "Logout" : "Login"}
           </button>
         </div>
 
@@ -132,11 +126,11 @@ const Navbar = () => {
                 <i className="fi fi-rr-dolly-flatbed"></i>
               </button>
               <span className="rounded-full absolute top-[-10px] left-[20px] bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center">
-                {cartItems.length}
+                0 {/* Replace with cartItems.length */}
               </span>
             </li>
             <li>
-              <button className="rounded-lg p-1 inline-block">
+              <button className="rounded-lg p-1 inline-block" onClick={handleLoginLogout}>
                 <i
                   className={`fi ${user ? "fi fi-rr-sign-out-alt" : "fi-rr-circle-user"}`}
                 ></i>

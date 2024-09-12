@@ -1,17 +1,11 @@
 
-import './App.css'
-import MainLayout from './components/layout/ManiLayout'
-import Home from './pages/Home'
+import './App.css';
+import ProtectedLayout from './components/layout/ProtectedLayout';
 
-function App() {
-
-
+const App = () => {
   return (
-    <>
-   <MainLayout></MainLayout>
-    
-    </>
-  )
-}
+    <ProtectedLayout />
+  );
+};
 
-export default App
+export default App;
