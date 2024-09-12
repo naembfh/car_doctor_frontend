@@ -24,7 +24,7 @@ const CdInput: React.FC<CdInputProps> = ({ type, label, name, placeHolder, valid
         {...register?.(name, validation)}
         className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${errors?.[name] ? 'border-red-500' : ''}`}
       />
-      {errors?.[name] && <p className="text-red-500 text-xs italic">{errors[name]?.message}</p>}
+      {errors?.[name] && <p className="text-red-500 text-xs italic">{String(errors[name]?.message)}</p>}
     </div>
   );
 };

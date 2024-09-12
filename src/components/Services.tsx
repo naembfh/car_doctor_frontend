@@ -31,10 +31,10 @@ const Services = () => {
 
     useEffect(() => {
         if (services.length > 0) {
-            const prices = services.map(service => service.price);
+            const prices = services.map((service: Service) => service.price);
             const minPrice = Math.min(...prices);
             const maxPrice = Math.max(...prices);
-
+    
             const rangeStep = (maxPrice - minPrice) / 5;
             const ranges = Array.from({ length: 5 }, (_, i) => {
                 const start = minPrice + i * rangeStep;
@@ -44,22 +44,32 @@ const Services = () => {
                     max: Math.round(end),
                 };
             });
-
+    
             setDynamicPriceRanges(ranges);
         }
     }, [services]);
+    
 
     if (isLoading) {
         return <div>Loading...</div>;
     }
 
     if (error) {
-        console.error(error);
-        const errorMessage = ('status' in error && error.data && 'message' in error.data)
-            ? error.data.message
+        const isErrorWithStatus = typeof error === 'object' && error !== null && 'status' in error;
+        const isErrorWithMessage =
+            isErrorWithStatus &&
+            error.data !== null && // Add a null check for error.data
+            typeof error.data === 'object' &&
+            error.data !== undefined && // Ensure error.data is defined and not unknown
+            'message' in error.data;
+    
+        const errorMessage = isErrorWithMessage
+            ? (error.data as { message: string }).message // Explicitly type error.data as an object with a message property
             : 'An error occurred';
+        
         return <div>Error: {errorMessage}</div>;
     }
+    
 
     // Filtering based on price range
     const filterServicesByPrice = (service: Service) => {

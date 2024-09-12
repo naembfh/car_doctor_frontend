@@ -1,5 +1,7 @@
-import { Service,  } from "../../types/serviceTypes"; 
+import { Service } from "../../types/serviceTypes"; 
+import { ServiceTags } from "../../types/tagTypes";
 import { baseApi } from "./baseApi";
+
 
 export const servicesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -10,6 +12,7 @@ export const servicesApi = baseApi.injectEndpoints({
         console.log('Full Response for All Services:', response);
         return response;
       },
+      providesTags: ['Service']
     }),
     
     // Fetch a service by ID
@@ -19,6 +22,7 @@ export const servicesApi = baseApi.injectEndpoints({
         console.log('Full Response for Service by ID:', response);
         return response; 
       },
+      providesTags: (result, error, id): ServiceTags[] => [{ type: 'Service', id }]
     }),
     
     // Add a new service
@@ -32,6 +36,7 @@ export const servicesApi = baseApi.injectEndpoints({
         console.log('Full Response for Service Added:', response);
         return response; 
       },
+      invalidatesTags: ['Service']
     }),
     
     // Update an existing service
@@ -45,6 +50,7 @@ export const servicesApi = baseApi.injectEndpoints({
         console.log('Full Response for Service Updated:', response);
         return response; 
       },
+      invalidatesTags: (result, error, { id }): ServiceTags[] => [{ type: 'Service', id }]
     }),
     
     // Delete a service by ID
@@ -57,6 +63,7 @@ export const servicesApi = baseApi.injectEndpoints({
         console.log('Full Response for Service Deleted:', response);
         return response; 
       },
+      invalidatesTags: (result, error, id): ServiceTags[] => [{ type: 'Service', id }]
     }),
   }),
   overrideExisting: false,

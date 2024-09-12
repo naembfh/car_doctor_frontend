@@ -1,7 +1,12 @@
 import { useState } from 'react';
-import { Link} from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { selectCurrentUser } from '../../redux/features/authSlice';
 
 const DashboardSidebar = () => {
+  const user = useSelector(selectCurrentUser, (prev, next) => prev === next);
+  console.log(user);
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleMenuToggle = () => {
@@ -31,34 +36,52 @@ const DashboardSidebar = () => {
                   to="/dashboard"
                 >
                   <i className="fi fi-rr-time-twenty-four p-2 m-2 text-xl text-gray-500"></i>
-                  dashboard
+                  Dashboard
                 </Link>
               </li>
+              
+              {/* Show the 'Management' link only if the user is an admin */}
+              {user.role === 'admin' && (
+                <>
+                  <li>
+                    <Link
+                      className="check-state text-gray-500 hover:text-gray-900"
+                      to="/management"
+                    >
+                      <i className="fi fi-rr-settings p-2 m-2 text-xl text-gray-500"></i>
+                      Management
+                    </Link>
+                  </li>
+                </>
+              )}
+
+              {/* Show the 'My Booking' link for regular users */}
+              {user.role === 'user' && (
+                <li>
+                  <Link
+                    className="check-state text-gray-500 hover:text-gray-900"
+                    to="/booking"
+                  >
+                    <i className="fi fi-rr-shopping-cart p-2 m-2 text-xl text-gray-500"></i>
+                    My Booking
+                  </Link>
+                </li>
+              )}
+
               <li>
                 <Link
                   className="check-state text-gray-500 hover:text-gray-900"
                   to="/services"
                 >
-                  <i className="fi fi-rr-time-twenty-four p-2 m-2 text-xl text-gray-500"></i>
-                  Service
+                  <i className="fi fi-rr-settings p-2 m-2 text-xl text-gray-500"></i>
+                  Services
                 </Link>
               </li>
-              <li>
-                <Link
-                  className="check-state text-gray-500 hover:text-gray-900"
-                  to=""
-                >
-                  <i className="fi fi-rr-shopping-cart p-2 m-2 text-xl text-gray-500"></i>
-                  Cart
-                </Link>
-              </li>
-              {/* Add other links as needed */}
             </ul>
           </nav>
 
           {/* User Section */}
           <div className="flex flex-col items-center justify-center text-gray-50 mb-10 w-full">
-           
             <button className="flex items-center justify-center w-40 h-10 bg-gray-600 border-2 border-gray-50 rounded-2xl py-2">
               <Link to="/account_logout">
                 <i className="fi fi-br-power p-2 text-base"></i>
@@ -68,8 +91,6 @@ const DashboardSidebar = () => {
           </div>
         </div>
       </aside>
-
-
 
       {/* Mobile Menu Toggle */}
       <div className="md:hidden fixed w-full z-50">

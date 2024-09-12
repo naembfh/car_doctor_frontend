@@ -6,7 +6,7 @@ export const authApi = createApi({
   reducerPath: "authApi", 
   baseQuery: fetchBaseQuery({
     baseUrl: "http://localhost:5000/api/",
-    credentials: "include",
+    credentials: "include", // This will include cookies if necessary
   }),
   endpoints: (builder) => ({
     // Login endpoint
@@ -20,7 +20,6 @@ export const authApi = createApi({
         try {
           const { data } = await queryFulfilled;
           const { token } = data;
-          console.log(data)
           dispatch(setUser({ token: token }));
         } catch (error) {
           console.error("Login error: ", error);
@@ -44,10 +43,17 @@ export const authApi = createApi({
         }
       },
     }),
+    // Fetch all users, no token needed
+    allUser: builder.query({
+      query: () => ({
+        url: "auth/all-users",
+        method: "GET",
+      }),
+    }),
     // Refresh token endpoint
     refreshToken: builder.mutation({
       query: () => ({
-        url: "auth/refresh",
+        url: "auth/refresh-token",
         method: "POST",
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -63,5 +69,4 @@ export const authApi = createApi({
   }),
 });
 
-export const { useLoginMutation, useSignUpMutation, useRefreshTokenMutation } =
-  authApi;
+export const { useLoginMutation, useSignUpMutation, useAllUserQuery, useRefreshTokenMutation } = authApi;

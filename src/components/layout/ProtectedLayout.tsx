@@ -1,22 +1,17 @@
 import { useSelector } from 'react-redux';
 import { Outlet } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
-
 import { selectCurrentUser } from '../../redux/features/authSlice';
 import MainLayout from './ManiLayout';
 
 const ProtectedLayout = () => {
-  const user = useSelector(selectCurrentUser);
+  const user = useSelector(selectCurrentUser, (prev, next) => prev === next);
 
-  if (user) {
-    return (
-      <DashboardLayout>
-        <Outlet />
-      </DashboardLayout>
-    );
-  }
-
-  return (
+  return user ? (
+    <DashboardLayout>
+      {/* <Outlet /> */}
+    </DashboardLayout>
+  ) : (
     <MainLayout>
       <Outlet />
     </MainLayout>

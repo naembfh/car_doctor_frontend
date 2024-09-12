@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
-import { useForm, UseFormRegister, FieldValues, FieldErrors, SubmitHandler, UseFormHandleSubmit } from 'react-hook-form';
+import { useForm, UseFormRegister, FieldValues, FieldErrors, SubmitHandler } from 'react-hook-form';
 
-interface CdFormProps<T> {
+interface CdFormProps<T extends FieldValues> {
   onSubmit: SubmitHandler<T>;
   children: ReactNode;
   register?: UseFormRegister<T>;
@@ -16,7 +16,8 @@ const CdForm = <T extends FieldValues>({ onSubmit, children }: CdFormProps<T>) =
       {
         React.Children.map(children, child => {
           if (React.isValidElement(child) && typeof child.type === 'function') {
-            return React.cloneElement(child, { register, errors });
+            // Casting child as React element to pass register and errors props
+            return React.cloneElement(child as React.ReactElement<any>, { register, errors });
           }
           return child;
         })

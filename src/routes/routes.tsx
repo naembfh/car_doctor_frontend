@@ -5,14 +5,15 @@ import LoginForm from '../pages/LoginForm';
 import RegisterForm from '../pages/RegisterForm';
 import Services from '../components/Services';
 import ServiceDetail from '../components/ServiceDetail';
-import NotFound from '../components/NotFound'; // Add a NotFound component for undefined routes
-
-import App from '../App';
+import NotFound from '../components/NotFound'; 
+import ProtectedLayout from '../components/layout/ProtectedLayout';
+import MyBooking from '../components/MyBooking';
+import AdminDashboard from '../components/adminDashboard/AdminDashboard';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />, // Use ProtectedLayout for routes
+    element: <ProtectedLayout/>, 
     children: [
       {
         index: true,
@@ -25,6 +26,14 @@ const router = createBrowserRouter([
       {
         path: 'service/:id',
         element: <ServiceDetail />,
+      },
+      {
+        path: 'booking',
+        element: <MyBooking/>,
+      },
+      {
+        path: 'management',
+        element: <AdminDashboard></AdminDashboard>
       },
     ],
   },

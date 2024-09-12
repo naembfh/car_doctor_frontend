@@ -1,21 +1,28 @@
+import React from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import CdForm from '../components/form/CdForm';
 import CdInput from '../components/form/CdInput';
 import img from '../assets/images/car_doctor (2).png';
-import { Link, useNavigate } from 'react-router-dom';
 import { useLoginMutation } from '../redux/api/authApi';
 import { toast } from 'sonner';
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [login, { isLoading }] = useLoginMutation();
 
-  const handleSubmit = async (data) => {
+  // Extract the 'redirect' query parameter from the URL
+  const queryParams = new URLSearchParams(location.search);
+  const redirectTo = queryParams.get('redirect') || '/'; // Default to '/' if no redirect param
+  console.log('Redirect URL:', redirectTo);
+
+  const handleSubmit = async (data: any) => {
     console.log('Form Data:', data);
     const { email, password } = data;
     try {
-      await login({ email, password }).unwrap(); 
+      await login({ email, password }).unwrap();
       toast.success("Logged in successfully");
-      navigate("/dashboard");
+      navigate(redirectTo); // Redirect to the previous page or default home page
     } catch (error) {
       console.error("Login failed:", error);
       toast.error("Login failed, please check your credentials.");

@@ -10,28 +10,31 @@ export const bookingApi = baseApi.injectEndpoints({
         method: "POST",
         body: booking,
       }),
-      transformResponse: (response: { data: Booking }) => {
-        console.log('Booking created:', response.data);
-        return response.data; 
+      transformResponse: (response: any) => {
+        console.log('Booking created:', response);
+        return response; // Send the entire response, not just response.data
       },
+      invalidatesTags: ['Booking'],
     }),
-    
+
     // Fetch all bookings (Admin only)
-    getAllBookings: builder.query<BookingsResponse, void>({
+    getAllBookings: builder.query<any, void>({
       query: () => "bookings",
-      transformResponse: (response: { data: BookingsResponse }) => {
-        console.log('All Bookings:', response.data);
-        return response.data; 
+      transformResponse: (response: any) => {
+        console.log('All Bookings:', response);
+        return response; // Send the entire response
       },
+      providesTags: ['Booking'],
     }),
-    
+
     // Fetch current user's bookings
-    getUserBookings: builder.query<BookingsResponse, void>({
+    getUserBookings: builder.query<any, void>({
       query: () => "my-bookings",
-      transformResponse: (response: { data: BookingsResponse }) => {
-        console.log('User Bookings:', response.data);
-        return response.data;
+      transformResponse: (response: any) => {
+        console.log('User Bookings:', response);
+        return response; // Send the entire response
       },
+      providesTags: ['Booking'],
     }),
   }),
   overrideExisting: false,

@@ -1,12 +1,13 @@
-import { Outlet } from "react-router-dom";
-import Navbar from "../shared/Navbar"
+import { Outlet } from 'react-router-dom';
+import Navbar from '../shared/Navbar';
 
-
-export default function MainLayout() {
+const MainLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
-      <Navbar></Navbar>
-      <Outlet></Outlet>
+      <Navbar />
+      {children || <Outlet />}
     </>
   );
-}
+};
+
+export default MainLayout;

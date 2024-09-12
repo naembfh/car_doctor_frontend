@@ -1,31 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import img from '../assets/images/car_doctor (3).png';
-import { useGetServiceByIdQuery } from '../redux/api/ProductsApi';
 import { useGetAvailableSlotsQuery } from '../redux/api/slotApi';
 import { selectCurrentUser } from '../redux/features/authSlice';
 import { useSelector } from 'react-redux';
-
+import BookingModal from './BookingModal';
 import { Slot } from '../types/slotTypes';
+import { useCreateBookingMutation } from '../redux/api/bookingApi';
+import { useGetServiceByIdQuery } from '../redux/api/ProductsApi';
 
 const ServiceDetail: React.FC = () => {
   const user = useSelector(selectCurrentUser);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isLoggedIn = !!user; // Check if user is logged in
+  const isLoggedIn = !!user;
 
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [serviceId, setServiceId] = useState<string | null>(null);
   const [displayedSlots, setDisplayedSlots] = useState<Slot[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch service details
   const { data: serviceData, error: serviceError, isLoading: serviceLoading } = useGetServiceByIdQuery(id ? parseInt(id) : 0);
-console.log(serviceData)
-  // Fetch available slots
-  const { data: slotsApiResponse, error: slotsError, isLoading: slotsLoading } = useGetAvailableSlotsQuery(serviceId || '', {
-    skip: serviceId === null,
+
+  const { data: slotsApiResponse, error: slotsError, isLoading: slotsLoading, refetch: refetchSlots } = useGetAvailableSlotsQuery(serviceId || '', {
+    skip: !serviceId,
   });
+
+  const [createBooking, { isSuccess: isBookingSuccess }] = useCreateBookingMutation();
 
   useEffect(() => {
     if (serviceData) {
@@ -34,7 +36,7 @@ console.log(serviceData)
   }, [serviceData]);
 
   useEffect(() => {
-    if (slotsApiResponse?.data) { 
+    if (slotsApiResponse?.data) {
       const today = new Date().toISOString().split('T')[0];
 
       const filteredSlots = slotsApiResponse.data
@@ -50,7 +52,7 @@ console.log(serviceData)
   }, [slotsApiResponse]);
 
   useEffect(() => {
-    if (slotsApiResponse?.data) { 
+    if (slotsApiResponse?.data) {
       const today = new Date().toISOString().split('T')[0];
 
       const filteredSlots = slotsApiResponse.data
@@ -79,17 +81,38 @@ console.log(serviceData)
   };
 
   const handleSlotChange = (slotId: string) => {
-    setSelectedSlot(slotId ?? null); 
+    setSelectedSlot(slotId ?? null);
   };
 
   const handleBookService = () => {
     if (isLoggedIn) {
-      console.log('Service booked with slot ID:', selectedSlot);
+      setIsModalOpen(true);
     } else {
       alert('Please log in to book this service.');
-      navigate('/login');
+      navigate(`/login?redirect=/service/${id}`);
     }
   };
+
+  const handleBooking = async () => {
+    if (serviceId && selectedSlot && user?.id) {
+      try {
+        await createBooking({ serviceId, slotId: selectedSlot, userId: user.id }).unwrap();
+        setIsModalOpen(false);
+        refetchSlots(); // Refetch slots after successful booking
+      } catch (error) {
+        console.error('Booking failed:', error);
+        alert('Booking failed, please try again.');
+      }
+    } else {
+      alert('Please select a slot and ensure you are logged in.');
+    }
+  };
+
+  useEffect(() => {
+    if (isBookingSuccess) {
+      console.log('Booking was successful');
+    }
+  }, [isBookingSuccess]);
 
   if (serviceLoading) return <div>Loading service...</div>;
   if (serviceError) return <div>Error loading service: {serviceError instanceof Error ? serviceError.message : 'Unknown error'}</div>;
@@ -164,21 +187,25 @@ console.log(serviceData)
         {selectedSlot && (
           <button
             onClick={handleBookService}
-            className={`w-full h-12 mt-4 ${isLoggedIn ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'} rounded-lg`}
-            disabled={!isLoggedIn || !selectedSlot}
+            className={`w-full h-12 mt-4 ${isLoggedIn ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600 '} rounded-lg`}
+            disabled={!selectedSlot}
           >
-            {isLoggedIn ? 'Book this Service' : 'Please log in to book this service'}
+            {isLoggedIn ? 'Book Service' : 'Log in to Book'}
           </button>
         )}
       </div>
 
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-4 right-4 text-gray-500 hover:text-gray-900"
-      >
-        <i className="fi fi-rr-rectangle-xmark text-2xl"></i>
-        <span className="sr-only">Close</span>
-      </button>
+      <BookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        serviceId={serviceId || ''}
+        slotId={selectedSlot || ''}
+        userId={user?.id || ''}
+        onSuccess={() => {
+          handleBooking();
+          setIsModalOpen(false);
+        }}
+      />
     </div>
   );
 };
