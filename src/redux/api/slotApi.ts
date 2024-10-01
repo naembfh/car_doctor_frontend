@@ -2,23 +2,21 @@ import { Slot } from "../../types/slotTypes";
 import { SlotTags } from "../../types/tagTypes";
 import { baseApi } from "./baseApi";
 
-
 export const slotApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Fetch available slots, optionally by serviceId
-    getAvailableSlots: builder.query<any, number | void>({
+    getAvailableSlots: builder.query<any, string | undefined>({
       query: (serviceId) => {
-        if (serviceId) {
-          return `slots/availability?serviceId=${serviceId}`;
-        } else {
-          return 'slots/availability'; // Fetch all slots if no serviceId is provided
-        }
+        console.log(serviceId);
+        return serviceId
+          ? `slots/availability?serviceId=${serviceId}`
+          : 'slots/availability'; 
       },
       transformResponse: (response: any) => {
         console.log('Full API Response for Available Slots:', response);
         return response;
       },
-      providesTags: (result, error, serviceId): SlotTags[] => [{ type: 'Slot', serviceId }]
+      providesTags: (serviceId): SlotTags[] => [{ type: 'Slot', serviceId }],
     }),
 
     // Create new slots
@@ -32,21 +30,21 @@ export const slotApi = baseApi.injectEndpoints({
         console.log('Full API Response for Created Slot:', response);
         return response;
       },
-      invalidatesTags: ['Slot']
+      invalidatesTags: ['Slot'],
     }),
 
-    // Update slot status
+    // Update slot status mutation
     updateSlotStatus: builder.mutation<any, { slotId: string; status: string }>({
       query: ({ slotId, status }) => ({
-        url: `slots/${slotId}`,
-        method: 'PATCH', // Use PATCH method for partial updates
-        body: { status },
+        url: 'slots/update', 
+        method: 'PATCH',
+        body: { slotId, isBooked: status }, 
       }),
       transformResponse: (response: any) => {
         console.log('Full API Response for Updated Slot Status:', response);
         return response;
       },
-      invalidatesTags: ['Slot'], // Invalidate Slot cache to trigger a re-fetch
+      invalidatesTags: ['Slot'],
     }),
   }),
   overrideExisting: false,

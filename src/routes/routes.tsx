@@ -1,4 +1,3 @@
-// src/routes/routes.tsx
 import { createBrowserRouter } from 'react-router-dom';
 import Home from '../pages/Home';
 import LoginForm from '../pages/LoginForm';
@@ -7,16 +6,21 @@ import Services from '../components/Services';
 import ServiceDetail from '../components/ServiceDetail';
 import NotFound from '../components/NotFound'; 
 import ProtectedLayout from '../components/layout/ProtectedLayout';
-import MyBooking from '../components/MyBooking';
+
 import AdminDashboard from '../components/adminDashboard/AdminDashboard';
+import PaymentSuccess from '../components/PaymentSuccess';
+import ProfilePage from '../components/ProfilePage';
+import AboutUsPage from '../components/AboutUspage';
+import CurrentBooking from '../components/CurrentBooking';
+import PastBooking from '../components/PastBooking';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <ProtectedLayout/>, 
+    element: <ProtectedLayout />, 
     children: [
       {
-        index: true,
+        path: '/',
         element: <Home />,
       },
       {
@@ -25,15 +29,31 @@ const router = createBrowserRouter([
       },
       {
         path: 'service/:id',
-        element: <ServiceDetail />,
+        element: <ServiceDetail />, 
       },
       {
-        path: 'booking',
-        element: <MyBooking/>,
+        path: 'dashboard/current-bookings',
+        element: <CurrentBooking />, 
       },
       {
-        path: 'management',
-        element: <AdminDashboard></AdminDashboard>
+        path: 'dashboard/past-bookings',
+        element: <PastBooking />, 
+      },
+      {
+        path: 'profile', 
+        element: <ProfilePage></ProfilePage>,
+      },
+      {
+        path: 'about', 
+        element: <AboutUsPage></AboutUsPage>,
+      },
+      {
+        path: 'admin',
+        element: <AdminDashboard />, 
+      },
+      {
+        path: 'success',
+        element: <PaymentSuccess></PaymentSuccess>
       },
     ],
   },
@@ -47,7 +67,7 @@ const router = createBrowserRouter([
   },
   {
     path: '*',
-    element: <NotFound />, // Catch-all route for undefined paths
+    element: <NotFound />,
   },
 ]);
 

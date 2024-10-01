@@ -1,32 +1,38 @@
-import { Service } from "../../types/serviceTypes"; 
-import { ServiceTags } from "../../types/tagTypes";
+import { Service } from "../../types/serviceTypes";
 import { baseApi } from "./baseApi";
-
 
 export const servicesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Fetch all services
-    getServices: builder.query<any, void>({ 
+    getServices: builder.query<any, void>({
       query: () => "services",
       transformResponse: (response: any) => {
         console.log('Full Response for All Services:', response);
         return response;
       },
-      providesTags: ['Service']
+      providesTags: (result) => {
+        console.log("Result in providesTags:", result);
+        return result && Array.isArray(result)
+          ? [
+              ...result.map(({ id }: { id: number }) => ({ type: 'Service' as const, id })),
+              { type: 'Service' as const },
+            ]
+          : [{ type: 'Service' as const }];
+      },
     }),
-    
+
     // Fetch a service by ID
-    getServiceById: builder.query<any, number>({ 
+    getServiceById: builder.query<any, string>({
       query: (id) => `services/${id}`,
       transformResponse: (response: any) => {
         console.log('Full Response for Service by ID:', response);
-        return response; 
+        return response;
       },
-      providesTags: (result, error, id): ServiceTags[] => [{ type: 'Service', id }]
+      providesTags: (_, __, id) => [{ type: 'Service' as const, id }],
     }),
-    
+
     // Add a new service
-    addService: builder.mutation<any, Partial<Service>>({ 
+    addService: builder.mutation<any, Partial<Service>>({
       query: (service) => ({
         url: "services",
         method: "POST",
@@ -34,13 +40,13 @@ export const servicesApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: any) => {
         console.log('Full Response for Service Added:', response);
-        return response; 
+        return response;
       },
-      invalidatesTags: ['Service']
+      invalidatesTags: [{ type: 'Service' as const }],
     }),
-    
+
     // Update an existing service
-    updateService: builder.mutation<any, { id: number; service: Partial<Service> }>({
+    updateService: builder.mutation<any, { id: string; service: Partial<Service> }>({
       query: ({ id, service }) => ({
         url: `services/${id}`,
         method: "PUT",
@@ -48,22 +54,22 @@ export const servicesApi = baseApi.injectEndpoints({
       }),
       transformResponse: (response: any) => {
         console.log('Full Response for Service Updated:', response);
-        return response; 
+        return response;
       },
-      invalidatesTags: (result, error, { id }): ServiceTags[] => [{ type: 'Service', id }]
+      invalidatesTags: (_, __, { id }) => [{ type: 'Service' as const, id }, { type: 'Service' as const }],
     }),
-    
+
     // Delete a service by ID
-    deleteService: builder.mutation<any, number>({
+    deleteService: builder.mutation<any, string>({
       query: (id) => ({
         url: `services/${id}`,
         method: "DELETE",
       }),
       transformResponse: (response: any) => {
         console.log('Full Response for Service Deleted:', response);
-        return response; 
+        return response;
       },
-      invalidatesTags: (result, error, id): ServiceTags[] => [{ type: 'Service', id }]
+      invalidatesTags: (_, __, id) => [{ type: 'Service' as const, id }, { type: 'Service' as const }],
     }),
   }),
   overrideExisting: false,

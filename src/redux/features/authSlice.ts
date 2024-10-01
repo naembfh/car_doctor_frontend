@@ -1,14 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { jwtDecode } from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 
 import { RootState } from "../store";
 
+// Type for user information extracted from JWT
 export type TUser = {
-  //   userId: string;
+  id: string;
   username: string;
+  phone: string;
   name: string;
   email: string;
   role: string;
+  address?: string;
+  img?: string;
   iat: number;
   exp: number;
 };
@@ -18,10 +22,10 @@ type TAuthState = {
   token: null | string;
 };
 
-// Initial state for auth slice
+// Initial state for the auth slice
 const initialState: TAuthState = {
   user: null,
-  token: null,
+  token: localStorage.getItem('token') || null, 
 };
 
 // Auth slice creation
@@ -29,27 +33,51 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Set the user and token in the state
     setUser: (state, action: PayloadAction<{ token: string }>) => {
       const { token } = action.payload;
-      state.token = token;
 
-      // Decode JWT to extract user details
-      const decoded = jwtDecode<TUser>(token);
-      state.user = {
-        // userId: decoded.userId,
-        username: decoded.username,
-        name: decoded.name,
-        email: decoded.email,
-        role: decoded.role,
-        iat: decoded.iat,
-        exp: decoded.exp,
-      };
+      // Check if token exists and is a valid string before decoding
+      if (token && typeof token === "string") {
+        state.token = token;
+
+        // Store token in localStorage
+        localStorage.setItem('token', token);
+
+        // Decode JWT to extract user details
+        try {
+          const decoded = jwtDecode<TUser>(token);
+          state.user = {
+            id: decoded?.id,
+            phone: decoded?.phone,
+            username: decoded.username,
+            name: decoded.name,
+            email: decoded.email,
+            role: decoded.role,
+            address: decoded?.address,
+            img: decoded?.img,
+            iat: decoded.iat,
+            exp: decoded.exp,
+          };
+        } catch (error) {
+          console.error("Invalid token format or decoding error:", error);
+          state.token = null;
+          state.user = null;
+          localStorage.removeItem('token');
+        }
+      } else {
+        console.error("Invalid token format");
+        state.token = null;
+        state.user = null;
+        localStorage.removeItem('token');
+      }
     },
 
     logout: (state) => {
       state.user = null;
       state.token = null;
+
+      // Remove token from localStorage
+      localStorage.removeItem('token');
     },
   },
 });

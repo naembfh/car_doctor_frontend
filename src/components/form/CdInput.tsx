@@ -14,7 +14,7 @@ interface CdInputProps {
 const CdInput: React.FC<CdInputProps> = ({ type, label, name, placeHolder, validation, register, errors }) => {
   return (
     <div className="mb-4">
-      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor={name}>
+      <label className="block text-gray-100 text-sm font-bold mb-2" htmlFor={name}>
         {label}
       </label>
       <input
