@@ -3,8 +3,9 @@ import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../redux/features/authSlice';
 import { loadStripe } from '@stripe/stripe-js';
 import { useState } from 'react';
+import BookingCard from './BookingCard';
 
-const stripePromise = loadStripe("pk_test_51L0YqPIFPHmtypU8Dw9vs6Mt8mOttFAvCqhuo6VEUzNXq9hUe6NQDT5NF5hCrJtg40phCRLRaMDZG4tTHJGsyUWs00QTV58MlD");
+const stripePromise = loadStripe('pk_test_51L0YqPIFPHmtypU8Dw9vs6Mt8mOttFAvCqhuo6VEUzNXq9hUe6NQDT5NF5hCrJtg40phCRLRaMDZG4tTHJGsyUWs00QTV58MlD');
 
 interface Booking {
   _id: string;
@@ -28,6 +29,8 @@ interface Booking {
 const CurrentBooking = () => {
   const { data: myBookingData, isLoading: bookingsLoading } = useGetUserBookingsQuery();
   const currentUser = useSelector(selectCurrentUser);
+  console.log(myBookingData)
+
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,15 +38,20 @@ const CurrentBooking = () => {
     const now = new Date();
 
     return (
-      myBookingData?.data.filter((booking: Booking) => {
-        if (!booking.slot) return false;
+      myBookingData?.data
+        .filter((booking: Booking) => {
+          if (!booking.slot) return false;
 
-        const slotDate = new Date(booking.slot.date);
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const bookingDate = new Date(slotDate.getFullYear(), slotDate.getMonth(), slotDate.getDate());
+          const bookingDateTime = new Date(`${booking.slot.date}T${booking.slot.startTime}`);
 
-        return !booking.isPaid && bookingDate >= today;
-      }) || []
+          // Exclude bookings that are already paid
+          return bookingDateTime > now && !booking.isPaid;
+        })
+        .sort((a: Booking, b: Booking) => {
+          const aDateTime = new Date(`${a.slot!.date}T${a.slot!.startTime}`);
+          const bDateTime = new Date(`${b.slot!.date}T${b.slot!.startTime}`);
+          return aDateTime.getTime() - bDateTime.getTime();
+        }) || []
     );
   };
 
@@ -95,45 +103,16 @@ const CurrentBooking = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl text-gray-100 font-bold mb-6">Current Bookings</h1>
+      <h1 className="text-2xl text-gray-100 font-bold mb-6">Upcoming Bookings</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Bookings List */}
         <div className="col-span-1 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {displayedBookings.length > 0 ? (
             displayedBookings.map((booking: Booking) => (
-              <div key={booking._id} className="bg-white shadow-lg rounded-lg overflow-hidden">
-                <div className="flex flex-col sm:flex-row">
-                  <div className="w-full sm:w-1/3 flex justify-center items-center p-4">
-                    <img
-                      src={booking.service?.img}
-                      alt="Service"
-                      className="w-20 h-20 object-cover rounded-md"
-                    />
-                  </div>
-                  <div className="p-4 w-full sm:w-2/3">
-                    <h2 className="font-bold text-lg">{booking.service?.name}</h2>
-                    <p className="text-gray-600 font-semibold">${booking.service?.price.toFixed(2)}</p>
-                    <p className="text-gray-600">
-                      <span className="font-semibold">Car:</span> {booking.vehicleBrand} {booking.vehicleModel}
-                    </p>
-                    <p className="text-gray-600">Plate: {booking.registrationPlate}</p>
-                  </div>
-                </div>
-                {booking.slot && (
-                  <div className="px-4 py-2">
-                    <p className="text-gray-700">
-                      <span className="font-semibold">Service Date:</span>{' '}
-                      {new Date(booking.slot.date).toLocaleDateString()}
-                    </p>
-                    <p className="text-gray-700">
-                      <span className="font-semibold">Time Slot:</span> {booking.slot.startTime} - {booking.slot.endTime}
-                    </p>
-                  </div>
-                )}
-              </div>
+              <BookingCard key={booking._id} booking={booking} />
             ))
           ) : (
-            <p className="text-center text-gray-100">No current bookings available.</p>
+            <p className="text-center text-gray-100">No unpaid upcoming bookings available.</p>
           )}
         </div>
 

@@ -13,6 +13,7 @@ import ProfilePage from '../components/ProfilePage';
 import AboutUsPage from '../components/AboutUspage';
 import CurrentBooking from '../components/CurrentBooking';
 import PastBooking from '../components/PastBooking';
+import Reviews from '../components/Reviews';
 
 const router = createBrowserRouter([
   {
@@ -36,7 +37,7 @@ const router = createBrowserRouter([
         element: <CurrentBooking />, 
       },
       {
-        path: 'dashboard/past-bookings',
+        path: 'dashboard/paid-bookings',
         element: <PastBooking />, 
       },
       {
@@ -55,6 +56,11 @@ const router = createBrowserRouter([
         path: 'success',
         element: <PaymentSuccess></PaymentSuccess>
       },
+      {
+        path: 'reviews',
+        element: <Reviews></Reviews>
+      },
+
     ],
   },
   {

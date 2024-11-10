@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import Navbar from '../shared/Navbar';
+import ScrollToTop from '../ScrollToTop';
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -7,6 +8,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
       <div className=''>
       <Navbar />
       {children || <Outlet />}
+      <ScrollToTop></ScrollToTop>
       </div>
     </>
   );

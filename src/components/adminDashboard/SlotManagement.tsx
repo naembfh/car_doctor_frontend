@@ -18,7 +18,8 @@ const SlotManagement: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: services, isLoading: isServicesLoading } = useGetServicesQuery();
+  // Add error handling for services query
+  const { data: services, isLoading: isServicesLoading, error: servicesError } = useGetServicesQuery();
   const servicesList = services?.data || [];
 
   const { data: slotResponse, isLoading: isSlotsLoading, error } = useGetAvailableSlotsQuery(undefined);
@@ -88,8 +89,8 @@ const SlotManagement: React.FC = () => {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  // Remove early return on error
   if (isServicesLoading || isSlotsLoading) return <div className="text-center py-4 text-white">Loading...</div>;
-  if (error) return <div className="text-center py-4 text-white">Error loading slots</div>;
 
   const sortedSlots = [...slots].sort((a: Slot, b: Slot) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -117,6 +118,10 @@ const SlotManagement: React.FC = () => {
     <div className="p-6 text-white">
       <h1 className="text-2xl font-bold mb-6">Slot Management</h1>
 
+      {/* Display error messages */}
+      {error && <div className="text-center py-4 text-white">Error loading slots</div>}
+      {servicesError && <div className="text-center py-4 text-white">Error loading services</div>}
+
       {/* Button to Open Modal */}
       <button
         className="bg-slate-500 text-white py-2 px-4 rounded-md mb-6 shadow-lg hover:bg-slate-600 transition duration-300"
@@ -137,12 +142,16 @@ const SlotManagement: React.FC = () => {
                   className="mt-1 block w-full p-2 border border-gray-700 rounded-md bg-gray-700 text-white"
                   value={typeof newSlot.service === 'string' ? newSlot.service : ''} 
                   onChange={(e) => setNewSlot({ ...newSlot, service: e.target.value })}
+                  disabled={servicesList.length === 0} // Disable if services list is empty
                 >
                   <option value="">Select a service</option>
                   {servicesList.map((service: Service) => (
                     <option key={service._id} value={service._id}>{service.name}</option>
                   ))}
                 </select>
+                {servicesList.length === 0 && (
+                  <p className="text-red-500 text-sm mt-2">No services available to select.</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium">Date:</label>
@@ -178,6 +187,7 @@ const SlotManagement: React.FC = () => {
                 <button
                   className="bg-slate-500 text-white py-2 px-4 rounded-md shadow-lg hover:bg-slate-600 transition duration-300"
                   onClick={handleAddSlot}
+                  disabled={!newSlot.service || servicesList.length === 0} // Disable if service not selected
                 >
                   Add Slot
                 </button>
@@ -208,75 +218,81 @@ const SlotManagement: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-  {paginatedSlots.map((slot: Slot) => {
-    // Handle case where service is an ID (string) or an object
-    const serviceName = typeof slot.service === 'string'
-      ? servicesList.find((service: Service) => service._id === slot.service)?.name || 'Unknown'
-      : slot.service?.name || 'Unknown';
+            {paginatedSlots.length > 0 ? (
+              paginatedSlots.map((slot: Slot) => {
+                // Handle case where service is an ID (string) or an object
+                const serviceName = typeof slot.service === 'string'
+                  ? servicesList.find((service: Service) => service._id === slot.service)?.name || 'Unknown'
+                  : slot.service?.name || 'Unknown';
 
-    return (
-      <tr key={slot._id}>
-        <td className="py-2 px-4 border border-gray-700 text-white">
-          {/* Display the service name */}
-          {serviceName}
-        </td>
-        <td className="py-2 px-4 border border-gray-700 text-white">{slot.date}</td>
-        <td className="py-2 px-4 border border-gray-700 text-white">{slot.startTime}</td>
-        <td className="py-2 px-4 border border-gray-700 text-white">{slot.endTime}</td>
-        <td className="py-2 px-4 border border-gray-700 text-white">{slot.isBooked}</td>
-        <td className="py-2 px-4 border border-gray-700 space-x-2">
-          {slot.isBooked === 'available' && (
-            <button
-              className="bg-red-500 text-white py-1 px-2 rounded-md shadow-lg hover:bg-red-600 transition duration-300"
-              onClick={() => handleUpdateSlotStatus(slot._id, 'canceled')}
-            >
-              Cancel
-            </button>
-          )}
-          {slot.isBooked === 'canceled' && (
-            <button
-              className="bg-slate-500 text-white py-1 px-2 rounded-md shadow-lg hover:bg-slate-600 transition duration-300"
-              onClick={() => handleUpdateSlotStatus(slot._id, 'available')}
-            >
-              Available
-            </button>
-          )}
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-
-
-
+                return (
+                  <tr key={slot._id}>
+                    <td className="py-2 px-4 border border-gray-700 text-white">
+                      {serviceName}
+                    </td>
+                    <td className="py-2 px-4 border border-gray-700 text-white">{slot.date}</td>
+                    <td className="py-2 px-4 border border-gray-700 text-white">{slot.startTime}</td>
+                    <td className="py-2 px-4 border border-gray-700 text-white">{slot.endTime}</td>
+                    <td className="py-2 px-4 border border-gray-700 text-white">{slot.isBooked}</td>
+                    <td className="py-2 px-4 border border-gray-700 space-x-2">
+                      {slot.isBooked === 'available' && (
+                        <button
+                          className="bg-red-500 text-white py-1 px-2 rounded-md shadow-lg hover:bg-red-600 transition duration-300"
+                          onClick={() => handleUpdateSlotStatus(slot._id, 'canceled')}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      {slot.isBooked === 'canceled' && (
+                        <button
+                          className="bg-slate-500 text-white py-1 px-2 rounded-md shadow-lg hover:bg-slate-600 transition duration-300"
+                          onClick={() => handleUpdateSlotStatus(slot._id, 'available')}
+                        >
+                          Available
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={6} className="py-4 px-4 text-center text-white">
+                  No slots available.
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
 
         {/* Pagination Controls */}
-        <div className="mt-4 flex justify-center space-x-2">
-          <button
-            className={`px-4 py-2 border-2 border-gray-700 rounded-md ${currentPage === 1 ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          {pageNumbers.map((number, index) => (
+        {totalPages > 1 && (
+          <div className="mt-4 flex justify-center space-x-2">
             <button
-              key={index}
-              className={`px-4 py-2 border-2 border-gray-700 rounded-md ${number === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
-              onClick={() => handlePageChange(number as number)}
+              className={`px-4 py-2 border-2 border-gray-700 rounded-md ${currentPage === 1 ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
             >
-              {number}
+              Previous
             </button>
-          ))}
-          <button
-            className={`px-4 py-2 border-2 border-gray-700 rounded-md ${currentPage === totalPages ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
-        </div>
+            {pageNumbers.map((number, index) => (
+              <button
+                key={index}
+                className={`px-4 py-2 border-2 border-gray-700 rounded-md ${number === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
+                onClick={() => handlePageChange(number as number)}
+              >
+                {number}
+              </button>
+            ))}
+            <button
+              className={`px-4 py-2 border-2 border-gray-700 rounded-md ${currentPage === totalPages ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

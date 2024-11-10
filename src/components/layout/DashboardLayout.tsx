@@ -4,6 +4,8 @@ import { Outlet } from 'react-router-dom';
 import defaultAvatar from '../../assets/images/765-default-avatar.png';
 import { selectCurrentUser } from '../../redux/features/authSlice';
 import { useSelector } from 'react-redux';
+import ScrollToTop from '../ScrollToTop';
+
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
@@ -43,6 +45,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         <div className="pt-20 px-2 py-5 flex-grow bg-gray-50 overflow-y-auto md:px-10">
           <div className="bg-gray-900 md:p-6 shadow-md rounded-lg">
             <Outlet />
+            <ScrollToTop></ScrollToTop>
           </div>
         </div>
       </div>

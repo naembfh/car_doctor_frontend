@@ -5,6 +5,7 @@ export interface TReview {
     username: string;
     img?: string; 
   };
+  username?: string;
   comment: string;
   rating: number;
   createdAt?: string; 

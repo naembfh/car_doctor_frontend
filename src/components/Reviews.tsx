@@ -1,154 +1,229 @@
-import { useState } from 'react';
-import { useCreateReviewMutation, useGetAllReviewsQuery } from '../redux/api/reviewApi';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom'; 
-import { toast } from 'sonner'; 
+import { FaStar } from 'react-icons/fa';
+import {
+  useCreateReviewMutation,
+  useGetAllReviewsQuery,
+} from '../redux/api/reviewApi';
+import { toast } from 'sonner';
 import { selectCurrentUser } from '../redux/features/authSlice';
+import Footer from './Footer';
 
 const Reviews = () => {
-  const { data: reviews = [], isLoading, isError } = useGetAllReviewsQuery();
-  const currentUser = useSelector(selectCurrentUser); 
-  const navigate = useNavigate(); 
-  const [showAll, setShowAll] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false); 
-  const [newReview, setNewReview] = useState({ comment: '', rating: 5 });
+  const { data: reviewsData, isLoading, isError } = useGetAllReviewsQuery();
+  const reviews = reviewsData || [];
   const [createReview] = useCreateReviewMutation();
+  const currentUser = useSelector(selectCurrentUser);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Function to handle review creation
+  const [newReview, setNewReview] = useState({ comment: '', rating: 0 });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [showAll, setShowAll] = useState(false); // Toggle between showing all reviews or top two
+
+  useEffect(() => {
+    if (reviews && reviews.length > 0) {
+      const avg =
+        reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length;
+      setAverageRating(parseFloat(avg.toFixed(1)));
+    } else {
+      setAverageRating(0);
+    }
+  }, [reviews]);
+
   const handleCreateReview = async () => {
     if (!currentUser) {
-      toast.error('You must be logged in to write a review.');
-      navigate('/login');
+      toast.error('You must be logged in to leave a review.');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
 
-    const reviewData = {
-      user: {
-        id: currentUser.id,
-        username: currentUser.username,
-        img: currentUser.img,
-      },
-      comment: newReview.comment,
-      rating: newReview.rating,
-    };
+    if (newReview.rating === 0 || newReview.comment.trim() === '') {
+      toast.error('Please provide a rating and comment.');
+      return;
+    }
 
     try {
-      await createReview(reviewData).unwrap();
-      toast.success('Review created successfully!');
-      setIsModalOpen(false); 
+      await createReview({ ...newReview, user: currentUser }).unwrap();
+      toast.success('Review submitted successfully!');
+      setIsModalOpen(false);
+      setNewReview({ comment: '', rating: 0 });
     } catch (error) {
-      toast.error('Error creating review.');
-      console.error('Error creating review:', error);
+      toast.error('Failed to submit review.');
     }
   };
 
-  // Sort reviews by createdAt in descending order
-  const sortedReviews = [...reviews].sort((a, b) =>
-    new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+  const StarRating = ({
+    rating,
+    setRating,
+  }: {
+    rating: number;
+    setRating: (rating: number) => void;
+  }) => (
+    <div className="flex space-x-2">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <FaStar
+          key={star}
+          className={`cursor-pointer text-2xl ${
+            rating >= star ? 'text-yellow-500' : 'text-gray-400'
+          }`}
+          onClick={() => setRating(star)}
+        />
+      ))}
+    </div>
   );
 
-  // Show the last three reviews unless 'showAll' is true
-  const reviewsToShow = showAll ? sortedReviews : sortedReviews.slice(0, 3);
+  // Sort reviews by createdAt
+  const sortedReviews = reviews
+    ? [...reviews].sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+      )
+    : [];
 
-  if (isLoading) return <p>Loading reviews...</p>;
-  if (isError) return <p>Error loading reviews. Please try again later.</p>;
+  // Show top two reviews or all reviews based on `showAll`
+  const reviewsToShow = showAll ? sortedReviews : sortedReviews.slice(0, 2);
 
   return (
-    <div className="p-6 bg-slate-800">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl text-slate-100 font-bold">Customer Reviews</h2>
-        {/* Button to create review or login */}
-        {!currentUser ? (
-          <button
-            className="bg-yellow-500 text-white px-4 py-2 rounded-md shadow-lg hover:bg-yellow-400"
-            onClick={() => navigate('/login')}
-          >
-            Login to Create Review
-          </button>
-        ) : (
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg hover:bg-blue-500"
-            onClick={() => setIsModalOpen(true)}
-          >
-            Create Review
-          </button>
-        )}
-      </div>
-
-      <ul className="grid gap-8 lg:grid-cols-3 sm:grid-cols-2">
-        {reviewsToShow.length > 0 ? (
-          reviewsToShow.map((review) => (
-            <li
-              key={review._id}
-              className="bg-slate-800 p-4 rounded-lg shadow-2xl transform hover:scale-105 transition duration-300 ease-in-out"
+    <>
+      <div className="relative bg-gradient-to-b from-gray-800 via-gray-900 to-black p-6 text-white">
+        {/* Black Overlay for Unauthenticated Users */}
+        {!currentUser && (
+          <div className="absolute inset-0 bg-black bg-opacity-100 flex justify-center items-center z-10">
+            <button
+              className="bg-yellow-500 px-6 py-2 rounded-lg shadow-lg hover:bg-yellow-400"
+              onClick={() =>
+                navigate(
+                  `/login?redirect=${encodeURIComponent(location.pathname)}`
+                )
+              }
             >
-              <p className="mb-2 text-slate-300">"{review.comment}"</p>
-              <p className="font-semibold text-white">Rating: {review.rating} ⭐</p>
-              <p className="text-slate-400 text-sm">
-                By {review.user?.username ?? 'Unknown'} on {new Date(review.createdAt ?? 0).toLocaleDateString()}
-              </p>
-            </li>
-          ))
-        ) : (
-          <p>No reviews available</p>
+              Login to Leave a Review
+            </button>
+          </div>
         )}
-      </ul>
 
-      {/* Show All button */}
-      {!showAll && sortedReviews.length > 3 && (
-        <div className="flex justify-center mt-6">
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg hover:bg-blue-500"
-            onClick={() => setShowAll(true)}
-          >
-            Show All Reviews
-          </button>
+        {/* Review Section */}
+        <div className="text-center">
+          <h2 className="text-4xl font-bold mb-4">Customer Reviews</h2>
+          <p className="text-xl">Average Rating: {averageRating} ⭐</p>
         </div>
-      )}
 
-      {/* Modal for creating a new review */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-slate-800 p-6 rounded-lg shadow-2xl max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4 text-white">Write a Review</h3>
-            <textarea
-              className="w-full p-2 mb-4 border border-slate-700 rounded-md bg-slate-700 text-white"
-              placeholder="Enter your review"
-              value={newReview.comment}
-              onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-            />
-            <label className="block mb-2 text-slate-300">Rating</label>
-            <select
-              className="w-full p-2 mb-4 border border-slate-700 rounded-md bg-slate-700 text-white"
-              value={newReview.rating}
-              onChange={(e) => setNewReview({ ...newReview, rating: Number(e.target.value) })}
-            >
-              {[5, 4, 3, 2, 1].map((rating) => (
-                <option key={rating} value={rating}>
-                  {rating} ⭐
-                </option>
+        {/* Conditionally render content based on loading and error states */}
+        {isLoading ? (
+          <p className="text-center mt-6">Loading reviews...</p>
+        ) : isError ? (
+          <p className="text-center mt-6 text-red-500">
+            Error loading reviews. Please try again later.
+          </p>
+        ) : reviews.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              {reviewsToShow.map((review) => (
+                <div
+                  key={review._id}
+                  className="bg-gray-800 p-4 rounded-lg shadow-lg transform hover:scale-105 transition duration-300"
+                >
+                  <p className="italic mb-2">"{review.comment}"</p>
+                  <div className="flex gap-2">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar
+                        key={i}
+                        className={
+                          i < review.rating ? 'text-yellow-500' : 'text-gray-400'
+                        }
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-400 mt-2">
+                    By {review?.username ?? 'Anonymous'} on{' '}
+                    {new Date(review.createdAt ?? 0).toLocaleDateString()}
+                  </p>
+                </div>
               ))}
-            </select>
+            </div>
 
-            <div className="flex justify-end space-x-4">
-              <button
-                className="bg-blue-600 text-white px-4 py-2 rounded-md shadow-lg hover:bg-blue-500"
-                onClick={handleCreateReview}
-              >
-                Submit Review
-              </button>
-              <button
-                className="bg-red-600 text-white px-4 py-2 rounded-md shadow-lg hover:bg-red-500"
-                onClick={() => setIsModalOpen(false)}
-              >
-                Cancel
-              </button>
+            {/* Show All Reviews Button */}
+            {sortedReviews.length > 2 && (
+              <div className="text-center mt-6">
+                {!showAll ? (
+                  <button
+                    className="bg-blue-600 px-4 py-2 rounded-lg shadow-lg hover:bg-blue-500"
+                    onClick={() => setShowAll(true)}
+                  >
+                    See All Reviews
+                  </button>
+                ) : (
+                  <button
+                    className="bg-blue-600 px-4 py-2 rounded-lg shadow-lg hover:bg-blue-500"
+                    onClick={() => setShowAll(false)}
+                  >
+                    Show Less
+                  </button>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-center mt-6">No reviews yet. Be the first to leave a review!</p>
+        )}
+
+        {/* Leave a Review Button */}
+        {currentUser && (
+          <div className="text-center mt-6">
+            <button
+              className="bg-green-600 px-4 py-2 rounded-lg shadow-lg hover:bg-green-500"
+              onClick={() => setIsModalOpen(true)}
+            >
+              Leave a Review
+            </button>
+          </div>
+        )}
+
+        {/* Modal for Writing a Review */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-20">
+            <div className="bg-gray-900 p-6 rounded-lg shadow-lg max-w-md w-full">
+              <h3 className="text-xl font-bold mb-4">Write a Review</h3>
+              <textarea
+                className="w-full p-2 mb-4 bg-gray-800 rounded-lg text-white"
+                placeholder="Enter your feedback"
+                value={newReview.comment}
+                onChange={(e) =>
+                  setNewReview({ ...newReview, comment: e.target.value })
+                }
+              />
+              <StarRating
+                rating={newReview.rating}
+                setRating={(rating: number) =>
+                  setNewReview({ ...newReview, rating })
+                }
+              />
+              <div className="flex justify-end space-x-4 mt-4">
+                <button
+                  className="bg-blue-600 px-4 py-2 rounded-lg shadow-lg hover:bg-blue-500"
+                  onClick={handleCreateReview}
+                >
+                  Submit
+                </button>
+                <button
+                  className="bg-red-600 px-4 py-2 rounded-lg shadow-lg hover:bg-red-500"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+      <Footer />
+    </>
   );
 };
 
 export default Reviews;
+
+

@@ -22,9 +22,17 @@ const ProtectedLayout = () => {
   const isDashboardRoute = location.pathname.startsWith('/dashboard');
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isProfileRoute = location.pathname.startsWith('/profile');
+  const isReviewRoute = location.pathname.startsWith('/reviews');
 
   // Always use MainLayout for Home
   if (isHomeRoute) {
+    return (
+      <MainLayout>
+        <Outlet />
+      </MainLayout>
+    );
+  }
+  if (isReviewRoute) {
     return (
       <MainLayout>
         <Outlet />

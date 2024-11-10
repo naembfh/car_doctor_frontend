@@ -1,4 +1,6 @@
 import { useGetUserBookingsQuery } from '../redux/api/bookingApi';
+import BookingCard from './BookingCard';
+
 interface Booking {
   _id: string;
   service: {
@@ -9,7 +11,7 @@ interface Booking {
   vehicleBrand: string;
   vehicleModel: string;
   registrationPlate: string;
-  slot?: { 
+  slot?: {
     date: string;
     startTime: string;
     endTime: string;
@@ -17,16 +19,22 @@ interface Booking {
   createdAt: string;
   isPaid: boolean;
 }
+
 const PastBooking = () => {
   const { data: myBooking, isLoading: bookingsLoading } = useGetUserBookingsQuery();
 
   const filterPastBookings = () => {
     const now = new Date();
 
-    return myBooking?.data.filter((booking: Booking) => {
-      const slotDate = booking.slot ? new Date(booking.slot.date) : null; 
-      return booking.isPaid || (slotDate && slotDate < now);
-    }) || [];
+    return (
+      myBooking?.data.filter((booking: Booking) => {
+        const slotEndDateTime = booking.slot
+          ? new Date(`${booking.slot.date}T${booking.slot.endTime}`)
+          : null;
+        // Include bookings that are paid, regardless of time, and unpaid bookings whose slot time has passed
+        return booking.isPaid || (slotEndDateTime && slotEndDateTime < now);
+      }) || []
+    );
   };
 
   if (bookingsLoading) return <p>Loading bookings...</p>;
@@ -39,24 +47,14 @@ const PastBooking = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {displayedBookings.length > 0 ? (
           displayedBookings.map((booking: Booking) => (
-            <div key={booking._id} className="bg-white shadow-lg rounded-lg p-4 relative">
-              {/* Paid Badge */}
-              {booking.isPaid && (
-                <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded">
-                  Paid
-                </span>
-              )}
-              <h2 className="font-bold text-lg">{booking.service.name}</h2>
-              <p>${booking.service.price}</p>
-              <p>{booking.vehicleBrand} {booking.vehicleModel}</p>
-              {/* Check if booking.slot exists before accessing date */}
-              {booking.slot && (
-                <p>Service Date: {new Date(booking.slot.date).toLocaleDateString()}</p>
-              )}
-            </div>
+            <BookingCard
+              key={booking._id}
+              booking={booking}
+              showTimeRemaining={true} // Show time remaining
+            />
           ))
         ) : (
-          <p>No past bookings available.</p>
+          <p className="text-gray-100">No past bookings available.</p>
         )}
       </div>
     </div>
@@ -64,3 +62,5 @@ const PastBooking = () => {
 };
 
 export default PastBooking;
+
+

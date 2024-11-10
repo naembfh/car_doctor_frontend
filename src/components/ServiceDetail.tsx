@@ -45,14 +45,17 @@ const ServiceDetail: React.FC = () => {
           new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
         );
       setDisplayedSlots(filteredSlots);
+    } else {
+      // If there's an error or no data, reset displayedSlots
+      setDisplayedSlots([]);
     }
-  }, [slotsApiResponse]);
+  }, [slotsApiResponse, slotsError]);
 
   useEffect(() => {
     if (selectedDate) {
       const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
       const filteredSlots = slotsApiResponse?.data
-        .filter((slot: Slot) =>
+        ?.filter((slot: Slot) =>
           slot.isBooked === 'available' &&
           isSameDay(new Date(slot.date), new Date(selectedDateString))
         )
@@ -95,10 +98,9 @@ const ServiceDetail: React.FC = () => {
     }
   }, [isBookingSuccess]);
 
+  // Keep early returns for service loading and error
   if (serviceLoading) return <div>Loading service...</div>;
-  if (serviceError) return <div>Error loading service: {serviceError instanceof Error ? serviceError.message : 'Unknown error'}</div>;
-  if (slotsLoading) return <div>Loading slots...</div>;
-  if (slotsError) return <div>Error loading slots: {slotsError instanceof Error ? slotsError.message : 'Unknown error'}</div>;
+  if (serviceError) return <div>Error loading service.</div>;
 
   return (
     <div className="relative bg-slate-800 p-4 md:p-8 flex flex-col md:flex-row border-2 shadow-md rounded-md">
@@ -132,21 +134,26 @@ const ServiceDetail: React.FC = () => {
         </div>
 
         <div className="relative mb-5">
-          <div className="grid grid-cols-2 gap-2">
-            {displayedSlots.length > 0 ? (
-              displayedSlots.map(slot => (
-                <button
-                  key={slot._id}
-                  onClick={() => handleSlotChange(slot._id)}
-                  className={`w-36 md:w-40 h-8 rounded-lg ${selectedSlot === slot._id ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                >
-                  {`${slot.startTime} - ${slot.endTime}`}
-                </button>
-              ))
-            ) : (
-              <div className="text-gray-500">No available slots</div>
-            )}
-          </div>
+          {/* Handle slots loading and error states */}
+          {slotsLoading ? (
+            <div className="text-gray-500">Loading slots...</div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {displayedSlots.length > 0 ? (
+                displayedSlots.map(slot => (
+                  <button
+                    key={slot._id}
+                    onClick={() => handleSlotChange(slot._id)}
+                    className={`w-36 md:w-40 h-8 rounded-lg ${selectedSlot === slot._id ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                  >
+                    {`${slot.startTime} - ${slot.endTime}`}
+                  </button>
+                ))
+              ) : (
+                <div className="text-gray-500">No slot data</div>
+              )}
+            </div>
+          )}
         </div>
 
         {selectedSlot && (
@@ -183,3 +190,4 @@ const ServiceDetail: React.FC = () => {
 };
 
 export default ServiceDetail;
+

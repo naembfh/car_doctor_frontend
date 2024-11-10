@@ -3,7 +3,7 @@ import { RootState } from '../store';
 import { setUser, logout } from '../features/authSlice';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: 'https://car-doctor-service-center.vercel.app/api',
+  baseUrl: ' https://car-doctor-service-center.vercel.app/api',
   credentials: 'include',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.token;

@@ -3,7 +3,7 @@ import DiscountComponent from '../components/DiscountComponent';
 import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
 import PopularServices from '../components/PopularServices';
-import Reviews from '../components/Reviews';
+import HomeReviews from '../components/HomeReviews';
 
 
 const Home = () => {
@@ -11,7 +11,7 @@ const Home = () => {
         <>
             <HeroSection></HeroSection>
             <PopularServices></PopularServices>
-            <Reviews></Reviews>
+           <HomeReviews></HomeReviews>
             <DiscountComponent></DiscountComponent>
             <Footer></Footer>
         </>
